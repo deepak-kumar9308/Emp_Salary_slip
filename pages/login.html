@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Employee Login</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: Arial, sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #667eea,
+                    #764ba2
+                );
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 430px;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        .icon {
+            text-align: center;
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 14px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #667eea;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #5568d9;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        .signup {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .signup a {
+            color: #667eea;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="icon">
+        👤
+    </div>
+
+    <h1>
+        Employee Login
+    </h1>
+
+    <p class="subtitle">
+        Login to view your salary slip
+    </p>
+
+    <form id="loginForm">
+
+        <div class="form-group">
+
+            <label>
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter username"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter password"
+                required
+            >
+
+        </div>
+
+        <button type="submit">
+            Login
+        </button>
+
+    </form>
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+    <div class="signup">
+
+        Don't have an account?
+
+        <a href="/signup.html">
+            Create Account
+        </a>
+
+    </div>
+
+</div>
+
+<script>
+
+const form =
+    document.getElementById("loginForm");
+
+const message =
+    document.getElementById("message");
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        message.textContent =
+            "Logging in...";
+
+        message.style.color =
+            "#333";
+
+        const username =
+            document
+                .getElementById("username")
+                .value;
+
+        const password =
+            document
+                .getElementById("password")
+                .value;
+
+        try {
+
+            const response =
+                await fetch(
+                    "/login",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/x-www-form-urlencoded"
+                        },
+
+                        body:
+                            new URLSearchParams({
+                                username,
+                                password
+                            }).toString()
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (result.success) {
+
+                message.textContent =
+                    result.message;
+
+                message.style.color =
+                    "green";
+
+                setTimeout(
+                    function() {
+
+                        window.location.href =
+                            result.redirect;
+
+                    },
+                    500
+                );
+
+            } else {
+
+                message.textContent =
+                    result.message;
+
+                message.style.color =
+                    "red";
+            }
+
+        } catch (error) {
+
+            message.textContent =
+                "Server connection failed.";
+
+            message.style.color =
+                "red";
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>

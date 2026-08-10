@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Employee Signup</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(
+                135deg,
+                #667eea,
+                #764ba2
+            );
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+
+            background: white;
+
+            padding: 35px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 17px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+
+            border: 1px solid #ddd;
+            border-radius: 8px;
+
+            font-size: 15px;
+
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #667eea;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #5568d9;
+        }
+
+        .message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Employee Signup</h1>
+
+    <p class="subtitle">
+        Create your employee account
+    </p>
+
+    <form id="signupForm">
+
+        <div class="form-group">
+
+            <label>Employee Name</label>
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Email</label>
+
+            <input
+                type="email"
+                name="email"
+                placeholder="example@gmail.com"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Username</label>
+
+            <input
+                type="text"
+                name="username"
+                placeholder="Choose username"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Password</label>
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Create password"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Basic Salary</label>
+
+            <input
+                type="number"
+                name="basic"
+                placeholder="Enter basic salary"
+                min="0"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>PF Deduction</label>
+
+            <input
+                type="number"
+                name="pf"
+                placeholder="Enter PF deduction"
+                min="0"
+                required
+            >
+
+        </div>
+
+        <button type="submit">
+            Send OTP
+        </button>
+
+    </form>
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+    <div class="login-link">
+
+        Already have an account?
+
+        <a href="/login.html">
+            Login
+        </a>
+
+    </div>
+
+</div>
+
+<script>
+
+const form =
+    document.getElementById("signupForm");
+
+const message =
+    document.getElementById("message");
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        message.textContent =
+            "Sending OTP...";
+
+        message.style.color =
+            "#333";
+
+        const formData =
+            new FormData(form);
+
+        const data =
+            new URLSearchParams(formData);
+
+        try {
+
+            const response =
+                await fetch(
+                    "/send-otp",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/x-www-form-urlencoded"
+                        },
+
+                        body: data.toString()
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (result.success) {
+
+                sessionStorage.setItem(
+                    "otpEmail",
+                    formData.get("email")
+                );
+
+                window.location.href =
+                    "/verify-otp.html";
+
+            } else {
+
+                message.textContent =
+                    result.message;
+
+                message.style.color =
+                    "red";
+            }
+
+        } catch (error) {
+
+            message.textContent =
+                "Server connection failed.";
+
+            message.style.color =
+                "red";
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>

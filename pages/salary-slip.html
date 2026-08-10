@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Salary Slip</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+
+            font-family: Arial, sans-serif;
+
+            background: #f3f6fb;
+
+            padding: 30px;
+        }
+
+        .topbar {
+            max-width: 900px;
+
+            margin: auto;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 25px;
+        }
+
+        .topbar h2 {
+            color: #333;
+        }
+
+        .logout {
+            padding: 10px 18px;
+
+            background: #dc3545;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 7px;
+
+            font-weight: bold;
+        }
+
+        .logout:hover {
+            background: #c82333;
+        }
+
+        .salary-container {
+            max-width: 900px;
+
+            margin: auto;
+
+            background: white;
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 35px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #667eea,
+                    #764ba2
+                );
+
+            color: white;
+
+            padding: 30px;
+
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .employee-info {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 20px;
+
+            padding: 30px;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box {
+            background: #f7f8fc;
+
+            padding: 18px;
+
+            border-radius: 10px;
+        }
+
+        .info-label {
+            color: #777;
+
+            font-size: 13px;
+
+            margin-bottom: 6px;
+        }
+
+        .info-value {
+            font-weight: bold;
+
+            word-break: break-word;
+        }
+
+        .salary-section {
+            padding: 30px;
+        }
+
+        .salary-row {
+            display: flex;
+
+            justify-content: space-between;
+
+            padding: 17px 10px;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .salary-row:last-child {
+            border-bottom: none;
+        }
+
+        .salary-row span:last-child {
+            font-weight: bold;
+        }
+
+        .gross {
+            font-size: 18px;
+        }
+
+        .net {
+            margin-top: 10px;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            background: #eef7ee;
+
+            font-size: 22px;
+
+            font-weight: bold;
+
+            display: flex;
+
+            justify-content: space-between;
+        }
+
+        .actions {
+            padding: 0 30px 30px;
+
+            display: flex;
+
+            gap: 15px;
+        }
+
+        .action-button {
+            flex: 1;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+            font-size: 15px;
+        }
+
+        .print {
+            background: #667eea;
+
+            color: white;
+        }
+
+        .print:hover {
+            background: #5568d9;
+        }
+
+        .loading {
+            text-align: center;
+
+            padding: 60px;
+
+            font-size: 20px;
+        }
+
+        .error {
+            text-align: center;
+
+            padding: 60px;
+
+            color: red;
+        }
+
+        @media (max-width: 700px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .employee-info {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+
+                gap: 15px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+        }
+
+        @media print {
+
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .topbar,
+            .actions {
+                display: none;
+            }
+
+            .salary-container {
+                box-shadow: none;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <h2>
+        Employee Portal
+    </h2>
+
+    <a
+        href="/logout"
+        class="logout"
+    >
+        Logout
+    </a>
+
+</div>
+
+<div
+    id="content"
+    class="salary-container"
+>
+
+    <div class="loading">
+        Loading salary slip...
+    </div>
+
+</div>
+
+<script>
+
+async function loadSalarySlip() {
+
+    const content =
+        document.getElementById("content");
+
+    try {
+
+        const response =
+            await fetch("/api/user");
+
+        const result =
+            await response.json();
+
+        if (!result.success) {
+
+            window.location.href =
+                "/login.html";
+
+            return;
+        }
+
+        const user =
+            result.user;
+
+        const salary =
+            result.salary;
+
+        content.innerHTML = `
+
+            <div class="header">
+
+                <h1>
+                    Employee Salary Slip
+                </h1>
+
+                <p>
+                    Salary Management System
+                </p>
+
+            </div>
+
+            <div class="employee-info">
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Employee Name
+                    </div>
+
+                    <div class="info-value">
+                        ${escapeHTML(user.name)}
+                    </div>
+
+                </div>
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Email
+                    </div>
+
+                    <div class="info-value">
+                        ${escapeHTML(user.email)}
+                    </div>
+
+                </div>
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Username
+                    </div>
+
+                    <div class="info-value">
+                        ${escapeHTML(user.username)}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="salary-section">
+
+                <div class="salary-row">
+
+                    <span>
+                        Basic Salary
+                    </span>
+
+                    <span>
+                        ₹${formatMoney(salary.basic)}
+                    </span>
+
+                </div>
+
+                <div class="salary-row">
+
+                    <span>
+                        HRA (20%)
+                    </span>
+
+                    <span>
+                        ₹${formatMoney(salary.hra)}
+                    </span>
+
+                </div>
+
+                <div class="salary-row">
+
+                    <span>
+                        DA (10%)
+                    </span>
+
+                    <span>
+                        ₹${formatMoney(salary.da)}
+                    </span>
+
+                </div>
+
+                <div class="salary-row">
+
+                    <span>
+                        PF Deduction
+                    </span>
+
+                    <span>
+                        - ₹${formatMoney(salary.pf)}
+                    </span>
+
+                </div>
+
+                <div class="salary-row gross">
+
+                    <span>
+                        Gross Salary
+                    </span>
+
+                    <span>
+                        ₹${formatMoney(salary.grossSalary)}
+                    </span>
+
+                </div>
+
+                <div class="net">
+
+                    <span>
+                        Net Salary
+                    </span>
+
+                    <span>
+                        ₹${formatMoney(salary.netSalary)}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button
+                    class="action-button print"
+                    onclick="window.print()"
+                >
+                    🖨️ Print Salary Slip
+                </button>
+
+            </div>
+        `;
+
+    } catch (error) {
+
+        content.innerHTML = `
+
+            <div class="error">
+
+                Unable to load salary slip.
+
+                <br><br>
+
+                Please login again.
+
+            </div>
+
+        `;
+    }
+}
+
+function formatMoney(value) {
+
+    return Number(value)
+        .toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+}
+
+function escapeHTML(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value;
+
+    return div.innerHTML;
+}
+
+loadSalarySlip();
+
+</script>
+
+</body>
+
+</html>
