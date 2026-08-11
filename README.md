@@ -1,7 +1,7 @@
 # 💼 Employee Salary Management System
 
 A simple and practical **Node.js Employee Salary Management System** that allows employees to register through a browser, verify their email using a **6-digit OTP**, log in, and view their calculated salary slip.
-
+Also you can print the pdf in the pdf format
 The project uses **Node.js, Nodemailer, Gmail SMTP, JSON file storage, HTML, CSS, and dotenv**.
 
 ---
@@ -40,6 +40,9 @@ The project uses **Node.js, Nodemailer, Gmail SMTP, JSON file storage, HTML, CSS
 | JSON | Data storage |
 
 ---
+
+
+
 
 ## 📂 Project Structure
 
