@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employees - Employee Management</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg-color: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #777777;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 250px; background: linear-gradient(180deg, var(--primary), var(--secondary)); color: white; padding: 20px 0; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 0 20px 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; text-align: center; }
+        .nav-item { padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; display: block; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid white; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .topbar h1 { font-size: 24px; color: var(--text-main); }
+        
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        .btn { padding: 10px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge.active { background: #eef7ee; color: var(--success); }
+        .badge.terminated { background: #fdeaea; color: var(--danger); }
+
+        /* Modal styling */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">💼 EMS Portal</div>
+        <a href="dashboard.html" class="nav-item">Dashboard</a>
+        <a href="employees.html" class="nav-item active">Employees</a>
+        <a href="departments.html" class="nav-item">Departments</a>
+        <a href="attendance.html" class="nav-item">Attendance</a>
+        <a href="leaves.html" class="nav-item">Leave Requests</a>
+        <a href="payroll.html" class="nav-item">Payroll</a>
+        <a href="insights.html" class="nav-item">Smart Insights</a>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h1>Employees Directory</h1>
+            <button class="btn" onclick="openModal()">+ Add Employee</button>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="empTable">
+                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div id="empModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Add New Employee</h2>
+            <form id="empForm">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <select id="department" required>
+                        <option value="">Select Department...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <select id="designation" required>
+                        <option value="">Select Designation...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Joining Date</label>
+                    <input type="date" id="joiningDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Basic Salary (₹)</label>
+                    <input type="number" id="basicSalary" required min="0">
+                </div>
+                
+                <h4 style="margin: 20px 0 10px;">User Account</h4>
+                <div class="form-group">
+                    <label>Create Login Account?</label>
+                    <select id="createAccount">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="userPassword" placeholder="Min 6 characters">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" style="background:#ccc; color:#333;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div id="editEmpModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Edit Employee Details</h2>
+            <form id="editEmpForm">
+                <input type="hidden" id="editEmpId">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="editFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="editLastName" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <select id="editDepartment" required>
+                        <option value="">Select Department...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <select id="editDesignation" required>
+                        <option value="">Select Designation...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Employment Type</label>
+                    <select id="editEmploymentType">
+                        <option value="Full-Time">Full-Time</option>
+                        <option value="Part-Time">Part-Time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Intern">Intern</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Basic Salary (₹)</label>
+                    <input type="number" id="editBasicSalary" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus">
+                        <option value="Active">Active</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Resigned">Resigned</option>
+                        <option value="Terminated">Terminated</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" style="background:#ccc; color:#333;" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn" style="background:#28a745;">Update Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login.html';
+
+        async function fetchEmployees() {
+            try {
+                const res = await fetch('/api/employees', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('empTable');
+                
+                if (data.success && data.employees.length > 0) {
+                    tbody.innerHTML = data.employees.map(emp => `
+                        <tr>
+                            <td><strong>${emp.employeeId}</strong></td>
+                            <td>${emp.firstName} ${emp.lastName}</td>
+                            <td>${emp.email}</td>
+                            <td>${emp.department?.name || 'Unassigned'}</td>
+                            <td><span class="badge ${emp.status === 'Active' ? 'active' : 'terminated'}">${emp.status}</span></td>
+                            <td style="display: flex; gap: 6px;">
+                                <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #0284c7;" onclick="openEditModal('${emp._id}')">✏️ Edit</button>
+                                <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #d97706;" onclick="deactivateEmp('${emp._id}')">⏸️ Deactivate</button>
+                                <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="hardDeleteEmp('${emp._id}')">🗑️ Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No employees found.</td></tr>';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadDropdowns(targetDeptId = 'department', targetDesigId = 'designation') {
+            try {
+                const [dRes, desRes] = await Promise.all([
+                    fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/designations', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                const dData = await dRes.json();
+                const desData = await desRes.json();
+
+                const deptSelect = document.getElementById(targetDeptId);
+                if (dData.success && dData.departments.length > 0) {
+                    deptSelect.innerHTML = '<option value="">Select Department...</option>' + 
+                        dData.departments.map(d => `<option value="${d._id}">${d.name} (${d.code})</option>`).join('');
+                }
+
+                const desSelect = document.getElementById(targetDesigId);
+                if (desData.success && desData.designations.length > 0) {
+                    desSelect.innerHTML = '<option value="">Select Designation...</option>' + 
+                        desData.designations.map(d => `<option value="${d._id}">${d.name}</option>`).join('');
+                }
+            } catch(e) {
+                console.error("Error loading dropdowns:", e);
+            }
+        }
+
+        // Soft delete (Deactivate)
+        async function deactivateEmp(id) {
+            if(confirm('Are you sure you want to deactivate this employee (set status to Terminated)?')) {
+                const res = await fetch(`/api/employees/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                alert(data.message);
+                fetchEmployees();
+            }
+        }
+
+        // Hard delete (Permanent Delete)
+        async function hardDeleteEmp(id) {
+            if(confirm('⚠️ PERMANENT DELETE WARNING:\n\nAre you sure you want to permanently delete this employee record and linked account? This cannot be undone.')) {
+                const res = await fetch(`/api/employees/${id}/hard`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                alert(data.message);
+                fetchEmployees();
+            }
+        }
+
+        // Open Add Modal
+        function openModal() { 
+            loadDropdowns('department', 'designation');
+            document.getElementById('empModal').style.display = 'flex'; 
+            document.getElementById('joiningDate').valueAsDate = new Date();
+        }
+        function closeModal() { document.getElementById('empModal').style.display = 'none'; document.getElementById('empForm').reset(); }
+
+        // Open Edit Modal
+        async function openEditModal(id) {
+            try {
+                await loadDropdowns('editDepartment', 'editDesignation');
+                const res = await fetch(`/api/employees/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+
+                if (data.success && data.employee) {
+                    const emp = data.employee;
+                    document.getElementById('editEmpId').value = emp._id;
+                    document.getElementById('editFirstName').value = emp.firstName || '';
+                    document.getElementById('editLastName').value = emp.lastName || '';
+                    document.getElementById('editPhone').value = emp.phone || '';
+                    document.getElementById('editDepartment').value = emp.department?._id || emp.department || '';
+                    document.getElementById('editDesignation').value = emp.designation?._id || emp.designation || '';
+                    document.getElementById('editEmploymentType').value = emp.employmentType || 'Full-Time';
+                    document.getElementById('editBasicSalary').value = emp.basicSalary || 0;
+                    document.getElementById('editStatus').value = emp.status || 'Active';
+
+                    document.getElementById('editEmpModal').style.display = 'flex';
+                } else {
+                    alert(data.message || 'Failed to fetch employee details.');
+                }
+            } catch(err) {
+                console.error("Error fetching employee for edit:", err);
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editEmpModal').style.display = 'none';
+            document.getElementById('editEmpForm').reset();
+        }
+
+        // Save New Employee Handler
+        document.getElementById('empForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                department: document.getElementById('department').value,
+                designation: document.getElementById('designation').value,
+                joiningDate: document.getElementById('joiningDate').value,
+                basicSalary: document.getElementById('basicSalary').value,
+                createAccount: document.getElementById('createAccount').value,
+                userPassword: document.getElementById('userPassword').value
+            };
+
+            const res = await fetch('/api/employees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                closeModal();
+                fetchEmployees();
+            } else {
+                alert(data.message);
+            }
+        });
+
+        // Update Employee Handler
+        document.getElementById('editEmpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const empId = document.getElementById('editEmpId').value;
+            const payload = {
+                firstName: document.getElementById('editFirstName').value,
+                lastName: document.getElementById('editLastName').value,
+                phone: document.getElementById('editPhone').value,
+                department: document.getElementById('editDepartment').value,
+                designation: document.getElementById('editDesignation').value,
+                employmentType: document.getElementById('editEmploymentType').value,
+                basicSalary: document.getElementById('editBasicSalary').value,
+                status: document.getElementById('editStatus').value
+            };
+
+            const res = await fetch(`/api/employees/${empId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert('Employee updated successfully!');
+                closeEditModal();
+                fetchEmployees();
+            } else {
+                alert(data.message);
+            }
+        });
+
+        fetchEmployees();
+    </script>
+</body>
+</html>

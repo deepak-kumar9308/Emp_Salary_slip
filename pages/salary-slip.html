@@ -306,221 +306,166 @@
 </div>
 
 <script>
-
 async function loadSalarySlip() {
+    const content = document.getElementById("content");
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
 
-    const content =
-        document.getElementById("content");
+    if (!token || !userStr) {
+        window.location.href = "/login.html";
+        return;
+    }
 
     try {
+        const response = await fetch("/api/salary-slips?limit=1", {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-        const response =
-            await fetch("/api/user");
-
-        const result =
-            await response.json();
+        const result = await response.json();
 
         if (!result.success) {
-
-            window.location.href =
-                "/login.html";
-
+            content.innerHTML = `<div class="error">${result.message || 'Error loading slip.'}</div>`;
             return;
         }
 
-        const user =
-            result.user;
+        if (result.slips.length === 0) {
+            content.innerHTML = `
+                <div class="header">
+                    <h1>Employee Salary Slip</h1>
+                </div>
+                <div class="error" style="color: #666;">No salary slips have been generated for you yet.</div>
+            `;
+            return;
+        }
 
-        const salary =
-            result.salary;
+        const slip = result.slips[0];
+        const snapshot = slip.salarySnapshot;
 
         content.innerHTML = `
-
             <div class="header">
-
-                <h1>
-                    Employee Salary Slip
-                </h1>
-
-                <p>
-                    Salary Management System
-                </p>
-
+                <h1>Employee Salary Slip</h1>
+                <p>Salary Management System - ${slip.month}/${slip.year}</p>
             </div>
 
             <div class="employee-info">
-
                 <div class="info-box">
-
-                    <div class="info-label">
-                        Employee Name
-                    </div>
-
-                    <div class="info-value">
-                        ${escapeHTML(user.name)}
-                    </div>
-
+                    <div class="info-label">Employee Name</div>
+                    <div class="info-value">${escapeHTML(snapshot?.employee?.name || slip.employee?.firstName + ' ' + slip.employee?.lastName || 'N/A')}</div>
                 </div>
-
                 <div class="info-box">
-
-                    <div class="info-label">
-                        Email
-                    </div>
-
-                    <div class="info-value">
-                        ${escapeHTML(user.email)}
-                    </div>
-
+                    <div class="info-label">Employee ID</div>
+                    <div class="info-value">${escapeHTML(snapshot?.employee?.employeeId || slip.employee?.employeeId || 'N/A')}</div>
                 </div>
-
                 <div class="info-box">
-
-                    <div class="info-label">
-                        Username
-                    </div>
-
-                    <div class="info-value">
-                        ${escapeHTML(user.username)}
-                    </div>
-
+                    <div class="info-label">Email</div>
+                    <div class="info-value">${escapeHTML(snapshot?.employee?.email || slip.employee?.email || 'N/A')}</div>
                 </div>
-
             </div>
 
             <div class="salary-section">
-
-                <div class="salary-row">
-
-                    <span>
-                        Basic Salary
-                    </span>
-
-                    <span>
-                        ₹${formatMoney(salary.basic)}
-                    </span>
-
-                </div>
-
-                <div class="salary-row">
-
-                    <span>
-                        HRA (20%)
-                    </span>
-
-                    <span>
-                        ₹${formatMoney(salary.hra)}
-                    </span>
-
-                </div>
-
-                <div class="salary-row">
-
-                    <span>
-                        DA (10%)
-                    </span>
-
-                    <span>
-                        ₹${formatMoney(salary.da)}
-                    </span>
-
-                </div>
-
-                <div class="salary-row">
-
-                    <span>
-                        PF Deduction
-                    </span>
-
-                    <span>
-                        - ₹${formatMoney(salary.pf)}
-                    </span>
-
-                </div>
-
-                <div class="salary-row gross">
-
-                    <span>
-                        Gross Salary
-                    </span>
-
-                    <span>
-                        ₹${formatMoney(salary.grossSalary)}
-                    </span>
-
+                <div style="display:flex; justify-content: space-between; gap: 20px;">
+                    <div style="flex:1;">
+                        <h3 style="margin-bottom:15px; color:#555; border-bottom:1px solid #eee; padding-bottom:10px;">Earnings</h3>
+                        <div class="salary-row"><span>Basic Salary</span><span>₹${formatMoney(snapshot.basicSalary)}</span></div>
+                        <div class="salary-row"><span>HRA</span><span>₹${formatMoney(snapshot.hra)}</span></div>
+                        <div class="salary-row"><span>Conveyance</span><span>₹${formatMoney(snapshot.conveyanceAllowance)}</span></div>
+                        <div class="salary-row"><span>Medical</span><span>₹${formatMoney(snapshot.medicalAllowance)}</span></div>
+                        <div class="salary-row"><span>Special</span><span>₹${formatMoney(snapshot.specialAllowance)}</span></div>
+                        ${snapshot.bonus > 0 ? `<div class="salary-row"><span>Bonus</span><span>₹${formatMoney(snapshot.bonus)}</span></div>` : ''}
+                        <div class="salary-row gross" style="margin-top:15px; border-top:1px solid #ccc;">
+                            <span>Gross Salary</span><span>₹${formatMoney(snapshot.grossSalary)}</span>
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <h3 style="margin-bottom:15px; color:#555; border-bottom:1px solid #eee; padding-bottom:10px;">Deductions</h3>
+                        <div class="salary-row"><span>PF</span><span>- ₹${formatMoney(snapshot.pf)}</span></div>
+                        <div class="salary-row"><span>Prof. Tax</span><span>- ₹${formatMoney(snapshot.professionalTax)}</span></div>
+                        <div class="salary-row"><span>TDS</span><span>- ₹${formatMoney(snapshot.tds)}</span></div>
+                        ${snapshot.unpaidLeaveDays > 0 ? `<div class="salary-row"><span>Unpaid Leave</span><span>- ₹${formatMoney(snapshot.otherDeductions)}</span></div>` : ''}
+                        <div class="salary-row gross" style="margin-top:15px; border-top:1px solid #ccc;">
+                            <span>Total Deductions</span><span>- ₹${formatMoney(snapshot.totalDeductions)}</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="net">
-
-                    <span>
-                        Net Salary
-                    </span>
-
-                    <span>
-                        ₹${formatMoney(salary.netSalary)}
-                    </span>
-
+                    <span>Net Salary Payable</span>
+                    <span>₹${formatMoney(snapshot.netSalary)}</span>
                 </div>
-
             </div>
 
             <div class="actions">
-
-                <button
-                    class="action-button print"
-                    onclick="window.print()"
-                >
+                <button class="action-button print" onclick="window.print()">
                     🖨️ Print Salary Slip
                 </button>
-
+                <button class="action-button" style="background:#28a745; color:white;" onclick="downloadPDF('${slip._id}')">
+                    📄 Download PDF
+                </button>
             </div>
         `;
 
     } catch (error) {
-
         content.innerHTML = `
-
             <div class="error">
-
                 Unable to load salary slip.
-
                 <br><br>
-
                 Please login again.
-
             </div>
-
         `;
     }
 }
 
-function formatMoney(value) {
+async function downloadPDF(id) {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`/api/salary-slips/${id}/download`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `SalarySlip_${id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } else {
+            alert('Failed to download PDF.');
+        }
+    } catch(err) {
+        alert('Error downloading PDF.');
+    }
+}
 
-    return Number(value)
-        .toLocaleString(
-            "en-IN",
-            {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }
-        );
+function formatMoney(value) {
+    return Number(value).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 function escapeHTML(value) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        value;
-
+    const div = document.createElement("div");
+    div.textContent = value;
     return div.innerHTML;
 }
 
+// Intercept logout link to remove token
+document.querySelector('.logout').addEventListener('click', function(e) {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if(token) {
+        fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+});
+
 loadSalarySlip();
-
 </script>
-
 </body>
-
 </html>

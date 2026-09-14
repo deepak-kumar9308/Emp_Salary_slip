@@ -1,2 +1,56 @@
+# Dependencies
 node_modules/
+jspm_packages/
+web_modules/
+
+# Environment variables
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# User uploads & generated files
+uploads/*
+!uploads/.gitkeep
+temp/
+tmp/
+
+# Logs & Debug outputs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic & Testing output
+coverage/
+.nyc_output/
+.clover/
+
+# Build & Cache directories
+dist/
+build/
+.cache/
+.eslintcache
+.parcel-cache
+*.tgz
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# System & OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini

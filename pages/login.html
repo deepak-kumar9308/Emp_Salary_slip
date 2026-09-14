@@ -164,14 +164,14 @@
         <div class="form-group">
 
             <label>
-                Username
+                Email
             </label>
 
             <input
-                type="text"
+                type="email"
                 id="username"
-                name="username"
-                placeholder="Enter username"
+                name="email"
+                placeholder="Enter email"
                 required
             >
 
@@ -217,100 +217,53 @@
 </div>
 
 <script>
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
 
-const form =
-    document.getElementById("loginForm");
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    message.textContent = "Logging in...";
+    message.style.color = "#333";
 
-const message =
-    document.getElementById("message");
+    const email = document.getElementById("username").value; // Using username input for email
+    const password = document.getElementById("password").value;
 
-form.addEventListener(
-    "submit",
-    async function(event) {
+    try {
+        const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
 
-        event.preventDefault();
+        const result = await response.json();
 
-        message.textContent =
-            "Logging in...";
+        if (result.success) {
+            message.textContent = result.message;
+            message.style.color = "green";
 
-        message.style.color =
-            "#333";
+            // Store JWT in localStorage
+            localStorage.setItem("token", result.token);
+            localStorage.setItem("user", JSON.stringify(result.user));
 
-        const username =
-            document
-                .getElementById("username")
-                .value;
-
-        const password =
-            document
-                .getElementById("password")
-                .value;
-
-        try {
-
-            const response =
-                await fetch(
-                    "/login",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/x-www-form-urlencoded"
-                        },
-
-                        body:
-                            new URLSearchParams({
-                                username,
-                                password
-                            }).toString()
-                    }
-                );
-
-            const result =
-                await response.json();
-
-            if (result.success) {
-
-                message.textContent =
-                    result.message;
-
-                message.style.color =
-                    "green";
-
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            result.redirect;
-
-                    },
-                    500
-                );
-
-            } else {
-
-                message.textContent =
-                    result.message;
-
-                message.style.color =
-                    "red";
-            }
-
-        } catch (error) {
-
-            message.textContent =
-                "Server connection failed.";
-
-            message.style.color =
-                "red";
+            setTimeout(function() {
+                // Redirect based on role
+                if (result.user.role === 'admin' || result.user.role === 'hr') {
+                    window.location.href = "/dashboard.html";
+                } else {
+                    window.location.href = "/salary-slip.html";
+                }
+            }, 500);
+        } else {
+            message.textContent = result.message;
+            message.style.color = "red";
         }
-
+    } catch (error) {
+        message.textContent = "Server connection failed.";
+        message.style.color = "red";
     }
-);
-
+});
 </script>
-
 </body>
-
 </html>

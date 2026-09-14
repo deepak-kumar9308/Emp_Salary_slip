@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments - Employee Management</title>
+    <style>
+        /* Shared Styles (same as employees.html) */
+        :root { --primary: #667eea; --secondary: #764ba2; --bg-color: #f4f7fb; --card-bg: #ffffff; --text-main: #333333; --text-muted: #777777; --success: #28a745; --danger: #dc3545; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: linear-gradient(180deg, var(--primary), var(--secondary)); color: white; padding: 20px 0; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 0 20px 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; text-align: center; }
+        .nav-item { padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; display: block; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid white; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .topbar h1 { font-size: 24px; color: var(--text-main); }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn { padding: 10px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-danger { background: var(--danger); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">💼 EMS Portal</div>
+        <a href="dashboard.html" class="nav-item">Dashboard</a>
+        <a href="employees.html" class="nav-item">Employees</a>
+        <a href="departments.html" class="nav-item active">Departments</a>
+        <a href="attendance.html" class="nav-item">Attendance</a>
+        <a href="leaves.html" class="nav-item">Leave Requests</a>
+        <a href="payroll.html" class="nav-item">Payroll</a>
+        <a href="insights.html" class="nav-item">Smart Insights</a>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h1>Departments</h1>
+            <button class="btn" onclick="openModal()">+ Add Department</button>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Employees</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="deptTable">
+                    <tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="deptModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Add Department</h2>
+            <form id="deptForm">
+                <div class="form-group">
+                    <label>Department Code</label>
+                    <input type="text" id="deptCode" placeholder="e.g. ENG" required>
+                </div>
+                <div class="form-group">
+                    <label>Department Name</label>
+                    <input type="text" id="deptName" placeholder="e.g. Engineering" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="deptDesc">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" style="background:#ccc; color:#333;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login.html';
+
+        async function fetchDepartments() {
+            try {
+                const res = await fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('deptTable');
+                
+                if (data.success && data.departments.length > 0) {
+                    tbody.innerHTML = data.departments.map(dept => `
+                        <tr>
+                            <td><strong>${dept.code}</strong></td>
+                            <td>${dept.name}</td>
+                            <td>${dept.description || '-'}</td>
+                            <td>${dept.employeeCount || 0}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="deleteDept('${dept._id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No departments found.</td></tr>';
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteDept(id) {
+            if(confirm('Are you sure you want to deactivate this department?')) {
+                const res = await fetch(`/api/departments/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if(data.success) fetchDepartments();
+                else alert(data.message);
+            }
+        }
+
+        function openModal() { document.getElementById('deptModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('deptModal').style.display = 'none'; document.getElementById('deptForm').reset(); }
+
+        document.getElementById('deptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                code: document.getElementById('deptCode').value,
+                name: document.getElementById('deptName').value,
+                description: document.getElementById('deptDesc').value
+            };
+
+            const res = await fetch('/api/departments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) { closeModal(); fetchDepartments(); }
+            else { alert(data.message); }
+        });
+
+        fetchDepartments();
+    </script>
+</body>
+</html>
