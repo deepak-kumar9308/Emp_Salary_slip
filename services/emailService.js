@@ -81,10 +81,10 @@ const sendSalaryGeneratedEmail = async (email, employeeName, month, year, netSal
 const verifyEmailConfiguration = async () => {
     try {
         await transporter.verify();
-        console.log('✅ Email service connected successfully.');
+        console.log('Email service connected successfully.');
         return true;
     } catch (error) {
-        console.log('⚠️  Email configuration error:', error.message);
+        console.log('Email configuration error:', error.message);
         return false;
     }
 };
